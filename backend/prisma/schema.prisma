@@ -1,0 +1,126 @@
+// Portfolio API - Prisma Schema
+// Gestion des FDAP (Fiches d'Activités Pédagogiques)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Rôles utilisateur
+enum Role {
+  ADMIN
+  USER
+}
+
+// Utilisateur
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String   // bcrypt hash
+  nom       String
+  prenom    String
+  annee     String?  // Année scolaire (ex: "2025-2026")
+  niveau    String   // CAP, Bac Pro, etc.
+  role      Role     @default(USER)
+  active    Boolean  @default(true)
+  fdaps     Fdap[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+
+  @@map("users")
+}
+
+// Fiche d'Activité Pédagogique
+model Fdap {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Titre
+  titre           String
+  
+  // Identité de l'élève
+  nomPrenom       String
+  dateSaisie      DateTime
+  
+  // Contexte de réalisation
+  lieu            String   // lycee, pfmp
+  enseigne        String?
+  lieuSpecifique  String?
+  
+  // Domaine / Compétences
+  domaine         String?
+  competences     String?  @db.Text
+  
+  // Conditions et ressources
+  autonomie        Int?     @default(3)  // 1-5 étoiles
+  materiels        String?  @db.Text
+  commanditaire    String?
+  contraintes      String?  @db.Text
+  consignes        String?  @db.Text
+  
+  // Descriptif Détaillé
+  avecQui         String?
+  deroulement     String?  @db.Text
+  resultats       String?  @db.Text
+  
+  // Bilan Personnel
+  difficulte      Int?     @default(3)  // 1-5 étoiles
+  plaisir         Int?     @default(3)  // 1-5 étoiles
+  ameliorations   String?  @db.Text
+  
+  // Médias
+  medias          Media[]
+  
+  // Métadonnées
+  status          FdapStatus @default(DRAFT)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt()
+
+  @@index([userId])
+  @@index([status])
+  @@map("fdaps")
+}
+
+// Statut de la fiche
+enum FdapStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// Média (photos, audio, vidéo, documents)
+model Media {
+  id          Int        @id @default(autoincrement())
+  fdapId      Int
+  fdap        Fdap       @relation(fields: [fdapId], references: [id], onDelete: Cascade)
+  
+  type        MediaType  // photo, audio, video, document
+  filename    String     // Nom original
+  storedName  String     // Nom stocké (UUID)
+  path        String     // Chemin relatif
+  mimeType    String     // Type MIME
+  size        Int        // Taille en octets
+  compressed  Boolean    @default(false)  // Image compressée ?
+  width       Int?       // Largeur (images)
+  height      Int?       // Hauteur (images)
+  order       Int        @default(0)  // Ordre d'affichage
+  
+  createdAt   DateTime   @default(now())
+
+  @@index([fdapId])
+  @@index([type])
+  @@map("medias")
+}
+
+// Type de média
+enum MediaType {
+  PHOTO
+  AUDIO
+  VIDEO
+  DOCUMENT
+}
