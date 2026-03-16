@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 
+const API_URL = 'http://192.168.10.224:3001/api';
+
 export default function FdapForm({ user }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -8,6 +10,8 @@ export default function FdapForm({ user }) {
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  
   const [fdap, setFdap] = useState({
     titre: '',
     nomPrenom: `${user.prenom} ${user.nom}`,
@@ -27,8 +31,19 @@ export default function FdapForm({ user }) {
     resultats: '',
     difficulte: 3,
     plaisir: 3,
-    ameliorations: '',
-    // Médias (files)
+    ameliorations: ''
+  });
+
+  // IDs des médias uploadés
+  const [mediaIds, setMediaIds] = useState({
+    audio: null,
+    video: null,
+    document: null,
+    photos: []
+  });
+
+  // Noms des fichiers pour affichage
+  const [fileNames, setFileNames] = useState({
     audio: null,
     video: null,
     document: null,
@@ -45,7 +60,7 @@ export default function FdapForm({ user }) {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://192.168.10.224:3001/api/fdap/${id}`, {
+      const res = await fetch(`${API_URL}/fdap/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -59,6 +74,96 @@ export default function FdapForm({ user }) {
     }
   };
 
+  // Upload un fichier
+  const uploadFile = async (file, type) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_URL}/media/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
+    });
+
+    return await res.json();
+  };
+
+  // Upload plusieurs fichiers
+  const uploadFiles = async (files) => {
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formData.append('photos', files[i]);
+    }
+
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_URL}/media/upload-multiple`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
+    });
+
+    return await res.json();
+  };
+
+  // Gérer l'upload d'un fichier
+  const handleFileUpload = async (e, field) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const result = await uploadFile(file, field);
+      if (result.media) {
+        setMediaIds(prev => ({ ...prev, [field]: result.media.id }));
+        setFileNames(prev => ({ ...prev, [field]: file.name }));
+      } else {
+        alert(result.error || 'Erreur lors de l\'upload');
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+      alert('Erreur lors de l\'upload');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Gérer l'upload des photos
+  const handlePhotosUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setUploading(true);
+    try {
+      const result = await uploadFiles(files);
+      if (result.medias) {
+        const newIds = result.medias.map(m => m.id);
+        const newNames = files.map(f => f.name);
+        
+        setMediaIds(prev => ({
+          ...prev,
+          photos: [...prev.photos.slice(0, 6 - newIds.length), ...newIds]
+        }));
+        setFileNames(prev => ({
+          ...prev,
+          photos: [...prev.photos.slice(0, 6 - newNames.length), ...newNames]
+        }));
+      } else {
+        alert(result.error || 'Erreur lors de l\'upload');
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+      alert('Erreur lors de l\'upload des photos');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFdap({ ...fdap, [name]: value });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -66,8 +171,8 @@ export default function FdapForm({ user }) {
     try {
       const token = localStorage.getItem('token');
       const url = isNew
-        ? 'http://192.168.10.224:3001/api/fdap'
-        : `http://192.168.10.224:3001/api/fdap/${id}`;
+        ? `${API_URL}/fdap`
+        : `${API_URL}/fdap/${id}`;
       const method = isNew ? 'POST' : 'PUT';
 
       const res = await fetch(url, {
@@ -91,23 +196,6 @@ export default function FdapForm({ user }) {
     } finally {
       setSaving(false);
     }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFdap({ ...fdap, [name]: value });
-  };
-
-  const handleFileChange = (e, field) => {
-    const file = e.target.files[0];
-    setFdap({ ...fdap, [field]: file });
-  };
-
-  const handlePhotoChange = (e, index) => {
-    const file = e.target.files[0];
-    const photos = [...fdap.photos];
-    photos[index] = file;
-    setFdap({ ...fdap, photos });
   };
 
   if (loading) {
@@ -196,16 +284,6 @@ export default function FdapForm({ user }) {
                 placeholder="Nom de l'entreprise"
               />
             </div>
-            <div className="fdap-field">
-              <label>Lieu spécifique</label>
-              <input
-                type="text"
-                name="lieuSpecifique"
-                value={fdap.lieuSpecifique}
-                onChange={handleChange}
-                placeholder="Atelier, salle, etc."
-              />
-            </div>
           </div>
         </div>
 
@@ -257,36 +335,6 @@ export default function FdapForm({ user }) {
                 onChange={handleChange}
                 rows={2}
                 placeholder="Outils, logiciels utilisés..."
-              />
-            </div>
-            <div className="fdap-field">
-              <label>Commanditaire</label>
-              <input
-                type="text"
-                name="commanditaire"
-                value={fdap.commanditaire}
-                onChange={handleChange}
-                placeholder="Personne demandeuse"
-              />
-            </div>
-            <div className="fdap-field">
-              <label>Contraintes</label>
-              <input
-                type="text"
-                name="contraintes"
-                value={fdap.contraintes}
-                onChange={handleChange}
-                placeholder="Délais, ressources..."
-              />
-            </div>
-            <div className="fdap-field">
-              <label>Consignes reçues</label>
-              <textarea
-                name="consignes"
-                value={fdap.consignes}
-                onChange={handleChange}
-                rows={2}
-                placeholder="Instructions données..."
               />
             </div>
           </div>
@@ -369,57 +417,57 @@ export default function FdapForm({ user }) {
           <h3>🎤 Multimédia / Entretien</h3>
           <div className="fdap-section-body">
             <div className="fdap-media-grid">
-              {/* Audio */}
               <div className="fdap-media-item">
                 <label>Audio</label>
                 <label className="fdap-upload-box">
                   <input
                     type="file"
                     accept="audio/*"
-                    onChange={(e) => handleFileChange(e, 'audio')}
+                    onChange={(e) => handleFileUpload(e, 'audio')}
                     className="fdap-hidden-input"
+                    disabled={uploading}
                   />
                   <span className="fdap-upload-icon">🎤</span>
-                  <span className="fdap-upload-text">Ajouter un audio</span>
-                  <span className="fdap-upload-hint">
-                    {fdap.audio?.name?.substring(0, 25) || 'MP3, WAV, OGG...'}
+                  <span className="fdap-upload-text">
+                    {fileNames.audio || 'Ajouter un audio'}
                   </span>
+                  <span className="fdap-upload-hint">MP3, WAV, OGG...</span>
                 </label>
               </div>
 
-              {/* Vidéo */}
               <div className="fdap-media-item">
                 <label>Vidéo</label>
                 <label className="fdap-upload-box">
                   <input
                     type="file"
                     accept="video/*"
-                    onChange={(e) => handleFileChange(e, 'video')}
+                    onChange={(e) => handleFileUpload(e, 'video')}
                     className="fdap-hidden-input"
+                    disabled={uploading}
                   />
                   <span className="fdap-upload-icon">📹</span>
-                  <span className="fdap-upload-text">Ajouter une vidéo</span>
-                  <span className="fdap-upload-hint">
-                    {fdap.video?.name?.substring(0, 25) || 'MP4, WebM, MOV...'}
+                  <span className="fdap-upload-text">
+                    {fileNames.video || 'Ajouter une vidéo'}
                   </span>
+                  <span className="fdap-upload-hint">MP4, WebM, MOV...</span>
                 </label>
               </div>
 
-              {/* Document */}
               <div className="fdap-media-item">
                 <label>Document</label>
                 <label className="fdap-upload-box">
                   <input
                     type="file"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx"
-                    onChange={(e) => handleFileChange(e, 'document')}
+                    accept=".pdf,.doc,.docx"
+                    onChange={(e) => handleFileUpload(e, 'document')}
                     className="fdap-hidden-input"
+                    disabled={uploading}
                   />
                   <span className="fdap-upload-icon">📄</span>
-                  <span className="fdap-upload-text">Ajouter un document</span>
-                  <span className="fdap-upload-hint">
-                    {fdap.document?.name?.substring(0, 25) || 'PDF, Word, Excel...'}
+                  <span className="fdap-upload-text">
+                    {fileNames.document || 'Ajouter un document'}
                   </span>
+                  <span className="fdap-upload-hint">PDF, Word...</span>
                 </label>
               </div>
             </div>
@@ -428,34 +476,35 @@ export default function FdapForm({ user }) {
 
         {/* Photos */}
         <div className="fdap-section">
-          <h3>📷 Photos</h3>
+          <h3>📷 Photos (jusqu'à 6)</h3>
           <div className="fdap-section-body">
-            <div className="fdap-photos-grid">
-              {[1,2,3,4,5,6].map((n, index) => (
-                <div key={n} className="fdap-photo-item">
-                  <label>Photo {n}</label>
-                  <label className="fdap-upload-box fdap-upload-box-photo">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handlePhotoChange(e, index)}
-                      className="fdap-hidden-input"
-                    />
-                    <span className="fdap-upload-icon">📷</span>
-                    <span className="fdap-upload-text">Photo {n}</span>
-                    {fdap.photos[index]?.name && (
-                      <span className="fdap-upload-hint">{fdap.photos[index].name.substring(0, 20)}</span>
-                    )}
-                  </label>
-                </div>
-              ))}
-            </div>
+            <label className="fdap-upload-box">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePhotosUpload}
+                className="fdap-hidden-input"
+                disabled={uploading}
+              />
+              <span className="fdap-upload-icon">📷</span>
+              <span className="fdap-upload-text">
+                {uploading ? 'Upload en cours...' : 'Ajouter des photos'}
+              </span>
+              <span className="fdap-upload-hint">
+                {fileNames.photos.filter(Boolean).length > 0 
+                  ? fileNames.photos.filter(Boolean).join(', ')
+                  : 'JPG, PNG, WebP...'
+                }
+              </span>
+            </label>
           </div>
         </div>
 
+        {/* Boutons */}
         <div className="fdap-submit-wrap">
-          <button type="submit" className="fdap-submit-btn" disabled={saving}>
-            {saving ? 'Enregistrement...' : isNew ? 'Enregistrer la fiche' : 'Mettre à jour'}
+          <button type="submit" className="fdap-submit-btn" disabled={saving || uploading}>
+            {uploading ? 'Upload en cours...' : saving ? 'Enregistrement...' : isNew ? 'Enregistrer la fiche' : 'Mettre à jour'}
           </button>
         </div>
 

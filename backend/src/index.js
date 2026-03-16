@@ -1,16 +1,21 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Servir les fichiers uploadés
+app.use('/uploads', express.static(UPLOAD_DIR));
 
 // Routes
 app.get('/api', (req, res) => {
@@ -30,15 +35,12 @@ app.get('/api', (req, res) => {
 const authRoutes = require('./routes/auth');
 const fdapRoutes = require('./routes/fdap');
 const usersRoutes = require('./routes/users');
+const mediaRoutes = require('./routes/media');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/fdap', fdapRoutes);
 app.use('/api/users', usersRoutes);
-
-// Media route placeholder
-app.use('/api/media', (req, res) => {
-  res.status(501).json({ error: 'Media upload non implémenté' });
-});
+app.use('/api/media', mediaRoutes);
 
 // Error handling
 app.use((err, req, res, next) => {
