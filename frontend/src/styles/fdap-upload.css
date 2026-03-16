@@ -1,0 +1,243 @@
+/* Upload boxes - zones de dépôt */
+.fdap-upload-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  border: 2px dashed var(--fdap-border);
+  border-radius: var(--fdap-radius-sm);
+  background: var(--fdap-bg);
+  cursor: pointer;
+  transition: var(--fdap-transition);
+  text-align: center;
+  min-height: 140px;
+}
+
+.fdap-upload-box:hover {
+  border-color: var(--fdap-primary);
+  background: rgba(37, 99, 235, 0.03);
+}
+
+.fdap-upload-box-photo {
+  min-height: 100px;
+  padding: 20px 12px;
+}
+
+.fdap-hidden-input {
+  display: none;
+}
+
+.fdap-upload-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.fdap-upload-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fdap-text);
+  margin-bottom: 4px;
+}
+
+.fdap-upload-hint {
+  font-size: 13px;
+  color: var(--fdap-text-light);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Media grid */
+.fdap-media-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.fdap-media-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fdap-media-item label:first-child {
+  font-weight: 600;
+  color: var(--fdap-text);
+  font-size: 0.9rem;
+}
+
+/* Photos grid */
+.fdap-photos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.fdap-photo-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fdap-photo-item label:first-child {
+  font-size: 14px;
+  color: var(--fdap-text-light);
+  font-weight: 500;
+}
+
+/* File preview */
+.fdap-file-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--fdap-card);
+  border: 1px solid var(--fdap-border);
+  border-radius: var(--fdap-radius-sm);
+}
+
+.fdap-file-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.fdap-file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.fdap-file-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fdap-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 8px;
+}
+
+.fdap-file-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.fdap-file-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--fdap-transition);
+  border: none;
+}
+
+.fdap-file-btn-open {
+  background: var(--fdap-primary);
+  color: white;
+}
+
+.fdap-file-btn-open:hover {
+  background: var(--fdap-primary-dark);
+  color: white;
+}
+
+.fdap-file-btn-remove {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.fdap-file-btn-remove:hover {
+  background: #fecaca;
+}
+
+/* Submit button */
+.fdap-submit-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0 16px;
+}
+
+.fdap-submit-btn {
+  padding: 18px 48px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--fdap-radius-sm);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--fdap-transition);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+}
+
+.fdap-submit-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.4);
+}
+
+.fdap-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Success message */
+.fdap-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  padding: 16px 24px;
+  border-radius: var(--fdap-radius-sm);
+  margin-bottom: 24px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Required indicator */
+.required {
+  color: #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .fdap-media-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fdap-photos-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .fdap-upload-box {
+    padding: 24px 12px;
+  }
+
+  .fdap-upload-icon {
+    font-size: 32px;
+  }
+
+  .fdap-file-preview {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .fdap-file-actions {
+    justify-content: center;
+  }
+
+  .fdap-submit-btn {
+    width: 100%;
+    padding: 16px 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fdap-photos-grid {
+    grid-template-columns: 1fr;
+  }
+}

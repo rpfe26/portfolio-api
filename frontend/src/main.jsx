@@ -1,7 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
+import './styles/fdap.css'
 import './styles/fdap-ui.css'
+import './styles/fdap-upload.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
