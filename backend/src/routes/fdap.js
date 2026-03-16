@@ -102,15 +102,30 @@ router.get('/:id', auth, async (req, res) => {
 // POST /api/fdap - Créer FDAP
 router.post('/', auth, async (req, res) => {
   try {
-    const fdapData = {
-      ...req.body,
-      userId: req.user.id,
+    const data = {
+      titre: req.body.titre,
+      nomPrenom: req.body.nomPrenom || req.body.nomPrenom || '',
       dateSaisie: req.body.dateSaisie ? new Date(req.body.dateSaisie) : new Date(),
+      lieu: req.body.lieu || 'lycee',
+      enseigne: req.body.enseigne || null,
+      lieuSpecifique: req.body.lieuSpecifique || null,
+      domaine: req.body.domaine || null,
+      competences: req.body.competences || null,
+      autonomie: parseInt(req.body.autonomie) || 3,
+      materiels: req.body.materiels || null,
+      commanditaire: req.body.commanditaire || null,
+      contraintes: req.body.contraintes || null,
+      consignes: req.body.consignes || null,
+      avecQui: req.body.avecQui || null,
+      deroulement: req.body.deroulement || null,
+      resultats: req.body.resultats || null,
+      difficulte: parseInt(req.body.difficulte) || 3,
+      plaisir: parseInt(req.body.plaisir) || 3,
+      ameliorations: req.body.ameliorations || null,
+      user: { connect: { id: req.user.id } }
     };
 
-    const fdap = await prisma.fdap.create({
-      data: fdap,
-    });
+    const fdap = await prisma.fdap.create({ data });
 
     res.status(201).json({ message: 'FDAP créée', fdap });
   } catch (error) {
