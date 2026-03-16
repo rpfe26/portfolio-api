@@ -26,16 +26,19 @@ app.get('/api', (req, res) => {
   });
 });
 
-// TODO: Import routes
-// const authRoutes = require('./routes/auth');
-// const fdapRoutes = require('./routes/fdap');
-// const usersRoutes = require('./routes/users');
-// const mediaRoutes = require('./routes/media');
+// Import routes
+const authRoutes = require('./routes/auth');
+const fdapRoutes = require('./routes/fdap');
+const usersRoutes = require('./routes/users');
 
-// app.use('/api/auth', authRoutes);
-// app.use('/api/fdap', fdapRoutes);
-// app.use('/api/users', usersRoutes);
-// app.use('/api/media', mediaRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/fdap', fdapRoutes);
+app.use('/api/users', usersRoutes);
+
+// Media route placeholder
+app.use('/api/media', (req, res) => {
+  res.status(501).json({ error: 'Media upload non implémenté' });
+});
 
 // Error handling
 app.use((err, req, res, next) => {
